@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      #mapaDiv { width: 600px; height: 600px; border: solid 1px #000;}
+    </style>
+  </head>
+  <body>
+    <div id="mapaDiv"></div>
+
+
+
+
+    <script>
+        var mapaObj = {
+          mapa:null,
+          posiciones:[ /* listado de marcadores a posicionar */
+                    {lat:40.4576481, lng:-3.5999431, txt:'Alameda de Osuna'},
+                    {lat:40.438035, lng:-3.678878, txt:'Avenida de America'},
+                    {lat:40.4200177, lng:-3.7082274, txt:'Callao'},
+                    {lat:40.4455511, lng:-3.7366499, txt:'Moncloa'},
+                    {lat:40.5327086, lng:-3.6503509, txt:'Alcobendas'}
+                  ],
+          markers:[],
+          markerBounds:null,
+          init:function(){
+              var posicion, marker, infowindow;
+
+              // creamos el mapa
+              mapaObj.mapa = new google.maps.Map(document.getElementById('mapaDiv'), {
+                center: {lat: 40.4378698, lng: -3.8196191},
+                zoom: 9
+              });
+              mapaObj.markerBounds = new google.maps.LatLngBounds();
+
+              /* colocamos los marcadores */
+              for (var i = 0; i < mapaObj.posiciones.length; i++) {
+                  posicion = new google.maps.LatLng(mapaObj.posiciones[i].lat, mapaObj.posiciones[i].lng);
+                  marker = new google.maps.Marker({
+                    position: posicion,
+                    /* En caso de querer un icono personalizado,
+                    ponemos la ruta absoluta a la imagen */
+                    // icon : document.location.origin + '/imagenes/icono-mapa.png',
+                    map: mapaObj.mapa
+                  });
+
+                  /* creamos un detalle a mostrar cuando pulsamos sobre el marcador */
+                  google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                    return function() {
+                      infowindow = new google.maps.InfoWindow({
+                          content: '<div>'+mapaObj.posiciones[i].txt+'</div>'
+                      });
+                      infowindow.open(mapaObj.mapa, mapaObj.markers[i]);
+                  }})(marker, i));
+
+                  /* almacenamos los marcadores en un array para poder luego calcular el centro del mapa */
+                  mapaObj.markers.push(marker);
+                  mapaObj.markerBounds.extend(posicion);
+              }
+
+              /* calculamos el punto central entre los marcadores que hemos añadido */
+              mapaObj.mapa.fitBounds(mapaObj.markerBounds);
+              centrar = JSON.parse(JSON.stringify(mapaObj.markerBounds.getCenter()));
+
+              /* en caso de poner pocos marcadores o muy juntos, especificamos un zoom minimo */
+              var listener = google.maps.event.addListener(mapaObj.mapa, "idle", function() {
+                if (mapaObj.mapa.getZoom() > 15) mapaObj.mapa.setZoom(15);
+                google.maps.event.removeListener(listener);
+              });
+
+              /* centramos el mapa sobre los marcadores que hemos puesto */
+              var myCenter = new google.maps.LatLng(centrar.lat, centrar.lng);
+              mapaObj.mapa.setCenter(myCenter);
+          }
+        };
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY&callback=mapaObj.init" async defer></script>
+
+
+
+  </body>
+</html>
